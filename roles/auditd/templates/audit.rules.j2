@@ -1,0 +1,16 @@
+# Surveiller les fichiers critiques
+-w /etc/passwd -p wa -k passwd_changes
+-w /etc/group -p wa -k group_changes
+-w /etc/shadow -p wa -k shadow_changes
+-w /var/log/ -p wa -k log_changes
+
+# Surveiller les changements de permissions sur les fichiers critiques
+-w /etc/passwd -p x -k passwd_permissions
+-w /etc/group -p x -k group_permissions
+
+# Surveiller les modifications des binaires système
+-w /bin/ -p wa -k binaries_changes
+-w /usr/bin/ -p wa -k binaries_changes
+
+# Suivre les exécutions de commandes sensibles
+-a always,exit -F arch=b64 -S execve -F euid=0 -k privileged_commands

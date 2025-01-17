@@ -1,0 +1,45 @@
+---
+- name: Installer et configurer msmtp pour l'envoi de mails
+  hosts: all
+  become: yes
+  tasks:
+
+    - name: Installer msmtp pour l'envoi de mails
+      apt:
+        name: msmtp
+        state: present
+
+    - name: Configurer msmtp pour Zoho Mail
+      copy:
+        dest: "/etc/msmtprc"
+        content: |
+          account zoho
+          host smtp.zoho.com
+          port 587
+          from systematik@zoho.com
+          user systematik@zoho.com
+          password outymil7/*-+
+          auth login
+          tls on
+          tls_trust_file /etc/ssl/certs/ca-certificates.crt
+          logfile /var/log/msmtp.log
+          account default : zoho
+      notify:
+        - restart msmtp
+
+    - name: Vérifier que msmtp est installé et accessible
+      command: which msmtp
+      register: msmtp_check
+      failed_when: msmtp_check.rc != 0
+
+    - name: Créer un répertoire pour les logs msmtp
+      file:
+        path: /var/log
+        state: directory
+        mode: '0755'
+
+    - name: Redémarrer msmtp si nécessaire (service fictif ici pour maintenir la logique)
+      systemd:
+        name: msmtp
+        state: restarted
+      when: msmtp_check.rc == 0

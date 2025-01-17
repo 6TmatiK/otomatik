@@ -1,0 +1,34 @@
+---
+- name: Configure NFtables and ensure persistence
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure NFtables is installed
+      apt:
+        name: nftables
+        state: present
+
+    - name: Configure NFtables rules
+      template:
+        src: nftables.conf.j2
+        dest: /etc/nftables.conf
+      notify: restart nftables
+
+    - name: Enable NFtables persistence
+      command: systemctl enable nftables
+      args:
+        warn: false
+
+    - name: Save current rules to /etc/nftables.conf
+      command: nft list ruleset > /etc/nftables.conf
+      when: not ansible_check_mode
+
+    - name: Ensure NFtables service is running
+      service:
+        name: nftables
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: restart nftables
+      command: nft -f /etc/nftables.conf

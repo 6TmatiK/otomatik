@@ -1,0 +1,31 @@
+table inet filter {
+    chain input {
+        type filter hook input priority 0; policy drop;
+
+        # Autoriser le trafic local
+        iif lo accept
+
+        # Autoriser les connexions établies
+        ct state related,established accept
+
+        # Autoriser ICMP (ping)
+        ip protocol icmp accept
+
+        # Bloquer IPv6
+        meta l4proto ipv6-icmp drop
+
+        # Limiter les connexions pour éviter les attaques DoS
+        limit rate 25/second accept
+
+        # Journaliser les connexions rejetées
+        log prefix "Dropped: " level debug
+    }
+
+    chain forward {
+        type filter hook forward priority 0; policy drop;
+    }
+
+    chain output {
+        type filter hook output priority 0; policy accept;
+    }
+}

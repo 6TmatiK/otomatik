@@ -1,0 +1,10 @@
+---
+# Main playbook: main.yml
+- hosts: local
+  become: yes
+  roles:
+    - auditd
+    - nftables
+    - cron_tasks
+    - mail_notifications
+    - thunderbird

@@ -1,0 +1,55 @@
+---
+- name: Configurer les tâches cron pour surveiller les services
+  hosts: all
+  become: yes
+  tasks:
+  
+    - name: Surveiller et redémarrer NFtables
+      cron:
+        name: "Vérifier et redémarrer NFtables"
+        minute: "*/5"
+        job: "systemctl is-active nftables || systemctl restart nftables"
+        user: root
+
+    - name: Surveiller et redémarrer Auditd
+      cron:
+        name: "Vérifier et redémarrer Auditd"
+        minute: "*/5"
+        job: "systemctl is-active auditd || systemctl restart auditd"
+        user: root
+
+    - name: Enregistrer les statuts des services dans un fichier de log
+      cron:
+        name: "Enregistrer les statuts des services"
+        minute: "*/5"
+        job: "echo \"$(date): $(systemctl is-active nftables) | $(systemctl is-active auditd)\" >> /var/log/system_status.log"
+        user: root
+
+    - name: Notifier par email si NFtables n'est pas en cours d'exécution
+      cron:
+        name: "Notifier si NFtables est arrêté"
+        minute: "*/5"
+        job: "if ! systemctl is-active nftables; then echo 'NFtables est arrêté sur $(hostname)' | msmtp systematik@zoho.com; fi"
+        user: root
+
+    - name: Notifier par email si Auditd n'est pas en cours d'exécution
+      cron:
+        name: "Notifier si Auditd est arrêté"
+        minute: "*/5"
+        job: "if ! systemctl is-active auditd; then echo 'Auditd est arrêté sur $(hostname)' | msmtp systematik@zoho.com; fi"
+        user: root
+
+    - name: Notifier par email en cas de blocage par le pare-feu
+      cron:
+        name: "Notifier les blocages par le pare-feu"
+        minute: "*/60"
+        job: "grep 'DROP' /var/log/nftables.log | tail -n 1 | msmtp systematik@zoho.com"
+        when: firewall_block_detected
+        user: root
+
+    - name: Notifier par email en cas d'anomalie détectée par Auditd
+      cron:
+        name: "Notifier les anomalies d'Auditd"
+        minute: "*/10"
+        job: "auditctl -s | grep 'anomaly' && echo 'Anomalie détectée par Auditd' | msmtp systematik@zoho.com"
+        user: root

@@ -1,0 +1,38 @@
+---
+- name: Install Thunderbird
+  apt:
+    name: thunderbird
+    state: present
+
+- name: Create Thunderbird configuration directory
+  file:
+    path: "/home/{{ ansible_user }}/.thunderbird"
+    state: directory
+    mode: '0700'
+
+- name: Configure Thunderbird account for Zoho
+  copy:
+    dest: "/home/{{ ansible_user }}/.thunderbird/zoho_mail_profile.json"
+    content: |
+      {
+        "email": "systematik@zoho.com",
+        "password": "outymil7/*-+",
+        "imap_server": "imap.zoho.com",
+        "smtp_server": "smtp.zoho.com"
+      }
+
+- name: Ensure Thunderbird starts on boot
+  copy:
+    dest: "/etc/xdg/autostart/thunderbird.desktop"
+    content: |
+      [Desktop Entry]
+      Type=Application
+      Exec=thunderbird
+      Name=Thunderbird
+      Comment=Start Thunderbird on login
+      X-GNOME-Autostart-enabled=true
+  notify: Restart Thunderbird
+
+handlers:
+  - name: Restart Thunderbird
+    command: "pkill thunderbird && thunderbird &"

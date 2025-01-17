@@ -1,0 +1,22 @@
+---
+# Tâches pour configurer Auditd
+- name: Ensure Auditd is installed
+  apt:
+    name: auditd
+    state: present
+
+- name: Ensure Auditd is running
+  service:
+    name: auditd
+    state: started
+    enabled: yes
+
+- name: Clear existing Auditd rules
+  command: auditctl -D
+  ignore_errors: yes
+
+- name: Configure Auditd rules
+  template:
+    src: audit.rules.j2
+    dest: /etc/audit/rules.d/audit.rules
+  notify: restart auditd
